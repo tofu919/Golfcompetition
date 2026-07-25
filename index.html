@@ -324,7 +324,7 @@ let lastAssignment = null;
 
 // ここにGASのデプロイURL(.../exec)を設定すると、ボタンで直接kintoneから取得できるようになります
 // 未設定(空文字)の間は、ボタンを押すとチャット経由での取得依頼になります
-const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxKNHDjpQhZ034KdMa4Z6DjOvRsw6UpUz71Q6MwsoLsU0JBaBFr4VR-j6E4XusMs5Sr/exec';
+const GAS_ENDPOINT = '';
 
 function requestKintoneSync(){
   if(GAS_ENDPOINT){
@@ -338,35 +338,57 @@ function requestKintoneSync(){
   }
 }
 
-async function fetchFromGas(){
+function fetchFromGas(){
   const btn = document.getElementById('kintoneSyncBtn');
   const originalLabel = btn.textContent;
   btn.textContent = '取得中...';
   btn.disabled = true;
-  try{
-    const res = await fetch(GAS_ENDPOINT);
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    if(data.error) throw new Error(data.message || '取得エラー');
 
-    participants = data.participants
-      .filter(p => p.status !== '休会')
-      .map(p => ({ id: p.id, name: p.name, company: p.company, handicap: p.handicap, gender: p.gender }));
-    nextId = (participants.length ? Math.max(...participants.map(p=>p.id)) : 0) + 1;
-    selectedIds = new Set(participants.map(p=>p.id));
-    renderParticipantList();
-    alert(`kintoneから${participants.length}名を取得しました`);
-  }catch(err){
-    console.warn('GAS経由の取得に失敗。チャット経由にフォールバックします。', err);
-    if(typeof sendPrompt === 'function'){
-      sendPrompt('kintoneの「ゴルフコンペ参加者マスタ」(アプリID: 3113)から最新の参加者データを取得して、組み合わせメーカーの参加者リストをその内容に更新してください。');
-    } else {
-      alert('kintoneへの接続に失敗しました: ' + err.message);
-    }
-  }finally{
+  const callbackName = 'kintoneCallback_' + Date.now();
+  let scriptEl = null;
+
+  function cleanup(){
+    clearTimeout(timeoutId);
+    delete window[callbackName];
+    if(scriptEl && scriptEl.parentNode) scriptEl.parentNode.removeChild(scriptEl);
     btn.textContent = originalLabel;
     btn.disabled = false;
   }
+
+  function fallbackToChat(reason){
+    console.warn('GAS経由の取得に失敗。チャット経由にフォールバックします。', reason);
+    if(typeof sendPrompt === 'function'){
+      sendPrompt('kintoneの「ゴルフコンペ参加者マスタ」(アプリID: 3113)から最新の参加者データを取得して、組み合わせメーカーの参加者リストをその内容に更新してください。');
+    } else {
+      alert('kintoneへの接続に失敗しました: ' + (reason && reason.message ? reason.message : reason));
+    }
+  }
+
+  const timeoutId = setTimeout(()=>{
+    cleanup();
+    fallbackToChat('タイムアウトしました');
+  }, 10000);
+
+  window[callbackName] = function(data){
+    cleanup();
+    try{
+      if(data.error) throw new Error(data.message || '取得エラー');
+      participants = data.participants
+        .filter(p => p.status !== '休会')
+        .map(p => ({ id: p.id, name: p.name, company: p.company, handicap: p.handicap, gender: p.gender }));
+      nextId = (participants.length ? Math.max(...participants.map(p=>p.id)) : 0) + 1;
+      selectedIds = new Set(participants.map(p=>p.id));
+      renderParticipantList();
+      alert(`kintoneから${participants.length}名を取得しました`);
+    }catch(err){
+      fallbackToChat(err);
+    }
+  };
+
+  scriptEl = document.createElement('script');
+  scriptEl.src = GAS_ENDPOINT + (GAS_ENDPOINT.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+  scriptEl.onerror = function(){ cleanup(); fallbackToChat('スクリプトの読み込みに失敗しました'); };
+  document.body.appendChild(scriptEl);
 }
 
 function renderParticipantList(){
