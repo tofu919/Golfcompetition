@@ -6,6 +6,8 @@
 <title>組み合わせメーカー | ゴルフコンペ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
     --green-deep:#1B4332;
@@ -606,6 +608,7 @@ function renderResults(groups){
     <div class="toolbar-actions">
       <button onclick="generateGroups()">🔀 再抽選</button>
       <button class="primary" onclick="copyResults()">📋 テキストをコピー</button>
+      <button id="pdfExportBtn" class="primary" onclick="exportPdf()">🖨 PDFに出力</button>
     </div>
   </div>`;
   html += `<div class="tee-batch">
@@ -659,6 +662,132 @@ function attachDragHandlers(){
       renderResults(lastAssignment);
     });
   });
+}
+
+function buildPdfTable(){
+  const wrap = document.createElement('div');
+  wrap.style.position = 'fixed';
+  wrap.style.left = '-9999px';
+  wrap.style.top = '0';
+  wrap.style.width = '720px';
+  wrap.style.background = '#ffffff';
+  wrap.style.padding = '28px';
+  wrap.style.fontFamily = "'Inter', sans-serif";
+
+  let rows = '';
+  lastAssignment.forEach((g, gi)=>{
+    const time = groupStartTimes[gi] ? groupStartTimes[gi] : '-';
+    g.forEach((p, pi)=>{
+      rows += '<tr>';
+      if(pi === 0){
+        rows += `<td class="pdf-group-cell" rowspan="${g.length}">${gi+1}組目</td>`;
+        rows += `<td class="pdf-time-cell" rowspan="${g.length}">${time}</td>`;
+      }
+      rows += `<td class="pdf-name-cell">${p.name}</td>`;
+      rows += `<td class="pdf-company-cell">${p.company || '-'}</td>`;
+      rows += '</tr>';
+    });
+  });
+
+  const today = new Date().toLocaleDateString('ja-JP');
+  wrap.innerHTML = `
+    <h2 style="font-size:21px;font-weight:800;color:#1B4332;margin:0 0 4px;">組み合わせ表</h2>
+    <p style="font-size:12px;color:#6b7c70;margin:0 0 18px;">作成日: ${today}</p>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th class="pdf-th" style="width:80px;">組</th>
+          <th class="pdf-th" style="width:100px;">スタート時刻</th>
+          <th class="pdf-th" style="text-align:left;">氏名</th>
+          <th class="pdf-th" style="text-align:left;">会社・団体</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  document.body.appendChild(wrap);
+
+  wrap.querySelectorAll('.pdf-th').forEach(th=>{
+    th.style.background = '#1B4332';
+    th.style.color = '#FBF8F1';
+    th.style.padding = '10px 12px';
+    th.style.fontSize = '13px';
+    th.style.fontWeight = '700';
+    th.style.border = '1px solid #1B4332';
+    if(!th.style.textAlign) th.style.textAlign = 'center';
+  });
+  wrap.querySelectorAll('td').forEach(td=>{
+    td.style.border = '1px solid #CFE3D6';
+    td.style.padding = '9px 12px';
+    td.style.fontSize = '13px';
+  });
+  wrap.querySelectorAll('.pdf-group-cell').forEach(td=>{
+    td.style.textAlign = 'center';
+    td.style.fontWeight = '800';
+    td.style.color = '#1B4332';
+    td.style.background = '#D8F3DC';
+    td.style.verticalAlign = 'middle';
+    td.style.fontSize = '15px';
+  });
+  wrap.querySelectorAll('.pdf-time-cell').forEach(td=>{
+    td.style.textAlign = 'center';
+    td.style.fontWeight = '700';
+    td.style.color = '#40916C';
+    td.style.verticalAlign = 'middle';
+  });
+  wrap.querySelectorAll('.pdf-name-cell').forEach(td=>{
+    td.style.fontWeight = '700';
+    td.style.color = '#1D2A1F';
+  });
+  wrap.querySelectorAll('.pdf-company-cell').forEach(td=>{
+    td.style.color = '#5c6f62';
+  });
+
+  return wrap;
+}
+
+async function exportPdf(){
+  if(!lastAssignment){ alert('先に組み合わせを作成してください'); return; }
+  const btn = document.getElementById('pdfExportBtn');
+  const originalLabel = btn.textContent;
+  btn.textContent = '生成中...';
+  btn.disabled = true;
+
+  let tableEl = null;
+  try{
+    tableEl = buildPdfTable();
+    const canvas = await html2canvas(tableEl, { scale: 2, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const imgWidth = pageWidth - margin * 2;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = margin;
+    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+    heightLeft -= (pageHeight - margin * 2);
+
+    while(heightLeft > 0){
+      position = heightLeft - imgHeight + margin;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      heightLeft -= (pageHeight - margin * 2);
+    }
+
+    pdf.save('組み合わせ表.pdf');
+  }catch(err){
+    console.error('PDF生成に失敗:', err);
+    alert('PDFの生成に失敗しました: ' + err.message);
+  }finally{
+    if(tableEl && tableEl.parentNode) tableEl.parentNode.removeChild(tableEl);
+    btn.textContent = originalLabel;
+    btn.disabled = false;
+  }
 }
 
 function copyResults(){
