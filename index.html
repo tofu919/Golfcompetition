@@ -30,23 +30,29 @@
   .app{max-width:1180px;margin:0 auto;padding:28px 20px 60px;}
 
   .header{
-    display:flex;align-items:baseline;gap:14px;
-    border-bottom:3px solid var(--green-deep);
-    padding-bottom:14px;margin-bottom:26px;flex-wrap:wrap;
+    display:flex;align-items:baseline;gap:12px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:16px;margin-bottom:26px;flex-wrap:wrap;
   }
   .header h1{
-    font-family:'Inter',sans-serif;font-weight:900;font-size:clamp(28px,4vw,40px);
+    font-family:'Inter',sans-serif;font-weight:800;font-size:clamp(22px,3vw,28px);
     color:var(--green-deep);margin:0;letter-spacing:-0.01em;
   }
-  .header p{margin:0;color:var(--green-fairway);font-size:14px;font-weight:600;}
-  .hole-tag{
-    font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;
-    background:var(--green-deep);color:var(--green-mist);padding:4px 10px;border-radius:20px;
-    letter-spacing:.04em;
-  }
+  .header p{margin:0;color:#6b7c70;font-size:13.5px;font-weight:500;}
 
   .layout{display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;}
   @media (max-width:860px){.layout{grid-template-columns:1fr;}}
+  @media (max-width:480px){
+    .app{padding:20px 14px 48px;}
+    .panel{padding:14px;}
+    .kintone-sync{flex-direction:column;align-items:stretch;text-align:left;}
+    .kintone-sync button{width:100%;}
+    .results-toolbar{flex-direction:column;align-items:stretch;}
+    .toolbar-actions{flex-direction:column;}
+    .toolbar-actions button{width:100%;}
+    .tee-batch{flex-direction:column;align-items:stretch;}
+    .tickets{grid-template-columns:1fr;}
+  }
 
   .panel{
     background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
@@ -62,18 +68,20 @@
     font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:var(--green-deep);font-weight:700;
   }
 
-  .participant-list{max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;}
+  .participant-list{max-height:280px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;}
   .p-row{
-    display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);
-    font-size:13px;
+    display:grid;grid-template-columns:18px 1fr auto auto;align-items:center;column-gap:10px;
+    padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;
   }
   .p-row:last-child{border-bottom:none;}
   .p-row input[type=checkbox]{accent-color:var(--green-fairway);width:16px;height:16px;flex-shrink:0;}
-  .p-name{font-weight:600;flex:1;}
-  .p-meta{color:#6b7c70;font-size:11.5px;}
-  .p-hc{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:700;color:var(--green-fairway);font-size:12px;min-width:34px;text-align:right;}
-  .p-remove{background:none;border:none;color:#b7c4bc;cursor:pointer;font-size:14px;padding:2px 4px;}
+  .p-text{display:flex;flex-direction:column;min-width:0;line-height:1.35;}
+  .p-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .p-meta{color:#6b7c70;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .p-hc{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:700;color:var(--green-fairway);font-size:12px;min-width:30px;text-align:right;flex-shrink:0;}
+  .p-remove{background:none;border:none;color:#b7c4bc;cursor:pointer;font-size:14px;padding:2px 4px;flex-shrink:0;}
   .p-remove:hover{color:var(--flag);}
+  .p-empty{padding:24px 16px;text-align:center;color:#8a998f;font-size:12.5px;line-height:1.6;}
 
   .kintone-sync{
     display:flex;align-items:center;justify-content:space-between;gap:8px;
@@ -88,9 +96,10 @@
   .kintone-sync button:hover{background:var(--green-fairway);}
   .select-actions{display:flex;gap:8px;margin:8px 0;font-size:12px;}
   .select-actions button{
-    background:var(--green-mist);border:none;color:var(--green-deep);padding:5px 10px;
-    border-radius:20px;font-size:11.5px;font-weight:600;cursor:pointer;
+    background:var(--white);border:1px solid var(--line);color:var(--green-deep);padding:6px 12px;
+    border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;
   }
+  .select-actions button:hover{background:var(--green-mist);border-color:var(--green-fairway);}
   .count-badge{font-size:12px;color:var(--green-fairway);font-weight:600;margin-top:6px;}
 
   .add-form-card{
@@ -144,7 +153,7 @@
 
   .generate-btn{
     width:100%;background:var(--green-deep);color:var(--white);border:none;
-    padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;
+    padding:13px;border-radius:10px;font-size:14.5px;font-weight:700;cursor:pointer;
     font-family:'Inter',sans-serif;letter-spacing:.01em;
     display:flex;align-items:center;justify-content:center;gap:8px;
   }
@@ -160,63 +169,55 @@
   .results-toolbar .stat{font-size:12.5px;color:var(--green-fairway);font-weight:600;}
   .toolbar-actions{display:flex;gap:8px;}
   .toolbar-actions button{
-    background:var(--white);border:1px solid var(--green-deep);color:var(--green-deep);
-    padding:8px 14px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;
+    background:var(--white);border:1px solid var(--line);color:var(--green-deep);
+    padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;
   }
   .toolbar-actions button:hover{background:var(--green-mist);}
   .toolbar-actions button.primary{background:var(--green-deep);color:var(--white);}
 
   .tickets{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;}
   .ticket{
-    background:var(--white);border:1.5px solid var(--green-deep);border-radius:12px;
-    position:relative;overflow:hidden;
-  }
-  .ticket::before{
-    content:"";position:absolute;top:44px;left:-8px;width:16px;height:16px;background:var(--cream);
-    border:1.5px solid var(--green-deep);border-radius:50%;
-  }
-  .ticket::after{
-    content:"";position:absolute;top:44px;right:-8px;width:16px;height:16px;background:var(--cream);
-    border:1.5px solid var(--green-deep);border-radius:50%;
+    background:var(--white);border:1px solid var(--line);border-radius:10px;
+    box-shadow:0 1px 2px rgba(27,67,50,.06);overflow:hidden;
   }
   .ticket-head{
     background:var(--green-deep);color:var(--green-mist);padding:10px 16px;
     display:flex;justify-content:space-between;align-items:baseline;
   }
-  .ticket-head .g-num{font-family:'Inter',sans-serif;font-weight:900;font-size:20px;color:var(--white);}
+  .ticket-head .g-num{font-family:'Inter',sans-serif;font-weight:800;font-size:16px;color:var(--white);}
   .ticket-head .g-avg{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;}
-  .ticket-body{padding:16px 14px 12px;border-top:1px dashed var(--line);}
+  .ticket-body{padding:14px 14px 8px;border-top:1px solid var(--line);}
   .member{
     display:flex;align-items:center;gap:8px;
-    padding:8px 6px;border-bottom:1px dashed var(--line);cursor:grab;font-size:13px;
+    padding:9px 6px;border-bottom:1px solid var(--line);cursor:grab;font-size:13px;
     border-radius:6px;transition:background .12s ease, box-shadow .12s ease, transform .12s ease;
   }
   .member:last-child{border-bottom:none;}
-  .member:hover{background:var(--green-mist);box-shadow:0 1px 4px rgba(27,67,50,.15);}
+  .member:hover{background:var(--green-mist);}
   .member:active{cursor:grabbing;transform:scale(0.98);}
   .member.drag-over{
-    background:var(--sand);outline:2px dashed var(--green-deep);outline-offset:-2px;
+    background:var(--green-mist);outline:2px dashed var(--green-fairway);outline-offset:-2px;
   }
-  .drag-handle{color:#a9b8ae;font-size:13px;letter-spacing:-1px;flex-shrink:0;user-select:none;}
-  .member:hover .drag-handle{color:var(--green-deep);}
+  .drag-handle{color:#b7c4bc;font-size:13px;letter-spacing:-1px;flex-shrink:0;user-select:none;}
+  .member:hover .drag-handle{color:var(--green-fairway);}
   .member-info{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0;}
-  .member-name{font-weight:700;}
-  .member-meta{color:#7c8f83;font-size:11px;}
+  .member-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .member-meta{color:#7c8f83;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .member-hc{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:700;color:var(--green-fairway);font-size:12px;flex-shrink:0;}
-  .drag-hint{font-size:10.5px;color:#7c8f83;text-align:center;padding:8px 0 2px;font-weight:600;}
+  .drag-hint{font-size:11px;color:#8a998f;text-align:center;padding:8px 0 2px;}
   .swap-banner{
-    display:flex;align-items:center;gap:10px;background:var(--sand);color:var(--ink);
-    border-radius:10px;padding:11px 16px;margin-bottom:16px;font-size:13px;font-weight:700;
+    display:flex;align-items:center;gap:10px;background:var(--white);color:#4a5a4f;
+    border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;
   }
-  .swap-banner .icon{font-size:18px;}
+  .swap-banner .icon{font-size:15px;color:var(--green-fairway);flex-shrink:0;}
 
   .tee-batch{
     display:flex;align-items:center;flex-wrap:wrap;gap:12px;
-    background:var(--green-mist);border:1px solid var(--green-fairway);border-radius:10px;
+    background:var(--white);border:1px solid var(--line);border-radius:10px;
     padding:10px 14px;margin-bottom:16px;font-size:12.5px;
   }
-  .tee-batch-label{font-weight:800;color:var(--green-deep);}
-  .tee-batch label{display:flex;align-items:center;gap:6px;font-weight:600;color:var(--ink);}
+  .tee-batch-label{font-weight:700;color:var(--green-deep);}
+  .tee-batch label{display:flex;align-items:center;gap:6px;font-weight:500;color:var(--ink);}
   .tee-batch input[type=time]{
     border:1px solid var(--line);border-radius:6px;padding:5px 6px;font-family:'Inter',sans-serif;font-size:12.5px;
   }
@@ -224,19 +225,19 @@
     border:1px solid var(--line);border-radius:6px;padding:5px 6px;font-family:'Inter',sans-serif;font-size:12.5px;text-align:center;
   }
   .tee-batch button{
-    background:var(--green-deep);color:var(--white);border:none;padding:6px 12px;
-    border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;
+    background:var(--green-deep);color:var(--white);border:none;padding:7px 14px;
+    border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;
   }
   .tee-batch button:hover{background:var(--green-fairway);}
 
   .tee-time-row{
     display:flex;align-items:center;gap:8px;padding:9px 14px;
-    background:var(--cream);border-bottom:1px dashed var(--line);
+    background:var(--cream);border-bottom:1px solid var(--line);
   }
-  .tee-time-row label{font-size:11.5px;font-weight:700;color:var(--green-deep);}
+  .tee-time-row label{font-size:11.5px;font-weight:600;color:var(--green-deep);}
   .tee-time-input{
-    border:1px solid var(--green-fairway);border-radius:6px;padding:4px 6px;
-    font-family:'Inter',sans-serif;font-weight:700;font-size:13px;color:var(--green-deep);background:var(--white);
+    border:1px solid var(--line);border-radius:6px;padding:4px 6px;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13px;color:var(--green-deep);background:var(--white);
   }
 </style>
 </head>
@@ -244,9 +245,8 @@
 <div class="app">
 
   <div class="header">
-    <h1>組み合わせメーカー</h1>
+    <h1>⛳ 組み合わせメーカー</h1>
     <p>参加者を選んでコンペの組分けを作成</p>
-    <span class="hole-tag">GOLF COMPETITION PAIRING</span>
   </div>
 
   <div class="layout">
@@ -317,34 +317,8 @@
 </div>
 
 <script>
-let participants = [
-  {id:1, name:"田中 健一", company:"サイボウズ株式会社", handicap:84.0, gender:"男性"},
-  {id:2, name:"佐藤 美咲", company:"サイボウズ株式会社", handicap:92.5, gender:"女性"},
-  {id:3, name:"鈴木 大輔", company:"株式会社ABCトレーディング", handicap:78.0, gender:"男性"},
-  {id:4, name:"高橋 由紀", company:"山田商事株式会社", handicap:105.5, gender:"女性"},
-  {id:5, name:"伊藤 誠", company:"株式会社ABCトレーディング", handicap:88.0, gender:"男性"},
-  {id:6, name:"渡辺 隆", company:"恵比寿建設株式会社", handicap:95.0, gender:"男性"},
-  {id:7, name:"中村 麻衣", company:"恵比寿建設株式会社", handicap:112.0, gender:"女性"},
-  {id:8, name:"小林 誠一", company:"株式会社フジワラ物流", handicap:82.5, gender:"男性"},
-  {id:9, name:"加藤 陽子", company:"株式会社ミナト保険", handicap:98.5, gender:"女性"},
-  {id:10, name:"山本 浩二", company:"東海電機株式会社", handicap:77.0, gender:"男性"},
-  {id:11, name:"松本 さくら", company:"グリーンフィールズ商会", handicap:104.0, gender:"女性"},
-  {id:12, name:"井上 健太", company:"株式会社ABCトレーディング", handicap:89.0, gender:"男性"},
-  {id:13, name:"木村 千尋", company:"山田商事株式会社", handicap:118.5, gender:"女性"},
-  {id:14, name:"林 修平", company:"東海電機株式会社", handicap:91.5, gender:"男性"},
-  {id:15, name:"斎藤 亮", company:"サイボウズ株式会社", handicap:85.0, gender:"男性"},
-  {id:16, name:"清水 直樹", company:"株式会社フジワラ物流", handicap:100.0, gender:"男性"},
-  {id:17, name:"山口 恵美", company:"株式会社ミナト保険", handicap:96.0, gender:"女性"},
-  {id:18, name:"森田 拓也", company:"グリーンフィールズ商会", handicap:80.5, gender:"男性"},
-  {id:19, name:"池田 美穂", company:"恵比寿建設株式会社", handicap:121.0, gender:"女性"},
-  {id:20, name:"橋本 和也", company:"株式会社ABCトレーディング", handicap:93.5, gender:"男性"},
-  {id:21, name:"石川 優子", company:"山田商事株式会社", handicap:88.5, gender:"女性"},
-  {id:22, name:"前田 隼人", company:"東海電機株式会社", handicap:75.5, gender:"男性"},
-  {id:23, name:"藤田 麻由", company:"サイボウズ株式会社", handicap:107.0, gender:"女性"},
-  {id:24, name:"岡田 慎一", company:"株式会社ミナト保険", handicap:102.5, gender:"男性"},
-  {id:25, name:"長谷川 智子", company:"グリーンフィールズ商会", handicap:115.5, gender:"女性"},
-];
-let nextId = 26;
+let participants = [];
+let nextId = 1;
 
 function fmtScore(v){ return (v===null || v===undefined || isNaN(v)) ? '-' : Math.round(v); }
 let selectedIds = new Set(participants.map(p=>p.id));
@@ -424,18 +398,24 @@ function fetchFromGas(){
 function renderParticipantList(){
   const list = document.getElementById('participantList');
   list.innerHTML = '';
-  participants.forEach(p=>{
-    const row = document.createElement('div');
-    row.className = 'p-row';
-    row.innerHTML = `
-      <input type="checkbox" ${selectedIds.has(p.id)?'checked':''} onchange="toggleSelect(${p.id}, this.checked)">
-      <span class="p-name">${p.name}</span>
-      <span class="p-meta">${p.company||''}</span>
-      <span class="p-hc">${fmtScore(p.handicap)}</span>
-      <button class="p-remove" onclick="removeParticipant(${p.id})" title="削除">✕</button>
-    `;
-    list.appendChild(row);
-  });
+  if(participants.length === 0){
+    list.innerHTML = `<div class="p-empty">参加者がまだ登録されていません。<br>「kintone情報を取得」ボタンか、下のフォームから追加してください。</div>`;
+  } else {
+    participants.forEach(p=>{
+      const row = document.createElement('div');
+      row.className = 'p-row';
+      row.innerHTML = `
+        <input type="checkbox" ${selectedIds.has(p.id)?'checked':''} onchange="toggleSelect(${p.id}, this.checked)">
+        <span class="p-text">
+          <span class="p-name">${p.name}</span>
+          <span class="p-meta">${p.company||''}</span>
+        </span>
+        <span class="p-hc">${fmtScore(p.handicap)}</span>
+        <button class="p-remove" onclick="removeParticipant(${p.id})" title="削除">✕</button>
+      `;
+      list.appendChild(row);
+    });
+  }
   document.getElementById('countBadge').textContent = `${selectedIds.size} / ${participants.length} 名 選択中`;
   renderPairSelects();
 }
@@ -620,7 +600,7 @@ function applyBatchStartTimes(){
 function renderResults(groups){
   const area = document.getElementById('resultsArea');
   const totalPeople = groups.reduce((s,g)=>s+g.length,0);
-  let html = `<div class="swap-banner"><span class="icon">↔️</span><span>メンバーの名前を別の組の上にドラッグ&ドロップすると、その2人を入れ替えられます</span></div>`;
+  let html = `<div class="swap-banner"><span class="icon">↔</span><span>メンバー名をドラッグして別の組にドロップすると、2人を入れ替えられます</span></div>`;
   html += `<div class="results-toolbar">
     <div class="stat">${groups.length}組 ／ 合計${totalPeople}名</div>
     <div class="toolbar-actions">
@@ -640,7 +620,7 @@ function renderResults(groups){
     html += `<div class="ticket">
       <div class="ticket-head"><span class="g-num">組 ${gi+1}</span><span class="g-avg">平均スコア ${avg}</span></div>
       <div class="tee-time-row">
-        <label for="tee-${gi}">⏰ スタート</label>
+        <label for="tee-${gi}">スタート時刻</label>
         <input type="time" id="tee-${gi}" class="tee-time-input" value="${groupStartTimes[gi]||''}" onchange="updateStartTime(${gi}, this.value)">
       </div>
       <div class="ticket-body" data-group="${gi}">`;
@@ -651,7 +631,7 @@ function renderResults(groups){
         <span class="member-hc">${fmtScore(p.handicap)}</span>
       </div>`;
     });
-    html += `</div><div class="drag-hint">⇅ ドラッグして入れ替え</div></div>`;
+    html += `</div><div class="drag-hint">ドラッグして入れ替え</div></div>`;
   });
   html += `</div>`;
   area.innerHTML = html;
