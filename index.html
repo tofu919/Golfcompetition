@@ -324,7 +324,7 @@ let lastAssignment = null;
 
 // ここにGASのデプロイURL(.../exec)を設定すると、ボタンで直接kintoneから取得できるようになります
 // 未設定(空文字)の間は、ボタンを押すとチャット経由での取得依頼になります
-const GAS_ENDPOINT = '';
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxKNHDjpQhZ034KdMa4Z6DjOvRsw6UpUz71Q6MwsoLsU0JBaBFr4VR-j6E4XusMs5Sr/exec';
 
 function requestKintoneSync(){
   if(GAS_ENDPOINT){
