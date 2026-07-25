@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>組み合わせメーカー | ゴルフコンペ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-deep:#1B4332;
+    --green-fairway:#40916C;
+    --green-mist:#D8F3DC;
+    --sand:#DDA83A;
+    --cream:#FBF8F1;
+    --ink:#1D2A1F;
+    --white:#FFFFFF;
+    --flag:#C1462F;
+    --line:#CFE3D6;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:1180px;margin:0 auto;padding:28px 20px 60px;}
+
+  .header{
+    display:flex;align-items:baseline;gap:14px;
+    border-bottom:3px solid var(--green-deep);
+    padding-bottom:14px;margin-bottom:26px;flex-wrap:wrap;
+  }
+  .header h1{
+    font-family:'Inter',sans-serif;font-weight:900;font-size:clamp(28px,4vw,40px);
+    color:var(--green-deep);margin:0;letter-spacing:-0.01em;
+  }
+  .header p{margin:0;color:var(--green-fairway);font-size:14px;font-weight:600;}
+  .hole-tag{
+    font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;
+    background:var(--green-deep);color:var(--green-mist);padding:4px 10px;border-radius:20px;
+    letter-spacing:.04em;
+  }
+
+  .layout{display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;}
+  @media (max-width:860px){.layout{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;margin-bottom:18px;
+  }
+  .panel h2{
+    font-family:'Inter',sans-serif;font-size:16px;font-weight:700;margin:0 0 12px;
+    color:var(--green-deep);display:flex;align-items:center;gap:8px;
+  }
+  .panel h2 .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:20px;height:20px;border-radius:50%;background:var(--green-mist);
+    font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:var(--green-deep);font-weight:700;
+  }
+
+  .participant-list{max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;}
+  .p-row{
+    display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .p-row:last-child{border-bottom:none;}
+  .p-row input[type=checkbox]{accent-color:var(--green-fairway);width:16px;height:16px;flex-shrink:0;}
+  .p-name{font-weight:600;flex:1;}
+  .p-meta{color:#6b7c70;font-size:11.5px;}
+  .p-hc{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:700;color:var(--green-fairway);font-size:12px;min-width:34px;text-align:right;}
+  .p-remove{background:none;border:none;color:#b7c4bc;cursor:pointer;font-size:14px;padding:2px 4px;}
+  .p-remove:hover{color:var(--flag);}
+
+  .kintone-sync{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    background:var(--green-mist);border:1px solid var(--green-fairway);border-radius:10px;
+    padding:9px 12px;margin-bottom:12px;
+  }
+  .kintone-sync span{font-size:11.5px;color:var(--green-deep);font-weight:600;line-height:1.4;}
+  .kintone-sync button{
+    background:var(--green-deep);color:var(--white);border:none;padding:7px 12px;
+    border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;
+  }
+  .kintone-sync button:hover{background:var(--green-fairway);}
+  .select-actions{display:flex;gap:8px;margin:8px 0;font-size:12px;}
+  .select-actions button{
+    background:var(--green-mist);border:none;color:var(--green-deep);padding:5px 10px;
+    border-radius:20px;font-size:11.5px;font-weight:600;cursor:pointer;
+  }
+  .count-badge{font-size:12px;color:var(--green-fairway);font-weight:600;margin-top:6px;}
+
+  .add-form-card{
+    margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--cream);
+  }
+  .add-form-title{
+    margin:0 0 10px;font-size:12.5px;font-weight:800;color:var(--green-deep);
+    text-transform:uppercase;letter-spacing:.04em;
+  }
+  .add-form{display:grid;grid-template-columns:1fr;gap:10px;}
+  .add-form label{
+    display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:700;color:#5c6f62;
+  }
+  .add-form input{
+    width:100%;min-width:0;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
+    padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--white);color:var(--ink);
+  }
+  .add-form input:focus{outline:2px solid var(--green-fairway);outline-offset:1px;}
+  .add-form-submit{
+    width:100%;margin-top:10px;background:var(--green-deep);color:var(--white);border:none;
+    padding:10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;
+  }
+  .add-form-submit:hover{background:var(--green-fairway);}
+
+  label.opt{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 0;cursor:pointer;}
+  label.opt input{accent-color:var(--green-fairway);width:16px;height:16px;}
+  .field-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .field-row label{font-size:13px;font-weight:600;}
+  .field-row input[type=number]{
+    width:60px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+    font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:700;text-align:center;
+  }
+
+  .pair-form{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+  .pair-form select{
+    font-size:12.5px;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--cream);
+  }
+  .pair-form .radios{display:flex;gap:12px;font-size:12px;}
+  .pair-form .radios label{display:flex;align-items:center;gap:4px;cursor:pointer;}
+  .pair-add-btn{
+    background:var(--sand);color:var(--ink);border:none;padding:7px;border-radius:8px;
+    font-size:12.5px;font-weight:700;cursor:pointer;margin-top:2px;
+  }
+  .chip-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .chip{
+    display:flex;align-items:center;gap:6px;background:var(--green-mist);color:var(--green-deep);
+    font-size:11.5px;font-weight:600;padding:5px 8px;border-radius:20px;
+  }
+  .chip.apart{background:#F7E1DA;color:var(--flag);}
+  .chip button{background:none;border:none;cursor:pointer;color:inherit;font-size:13px;line-height:1;}
+
+  .generate-btn{
+    width:100%;background:var(--green-deep);color:var(--white);border:none;
+    padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;
+    font-family:'Inter',sans-serif;letter-spacing:.01em;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .generate-btn:hover{background:var(--green-fairway);}
+  .generate-btn:active{transform:scale(0.99);}
+
+  .results-empty{
+    border:2px dashed var(--line);border-radius:var(--radius);padding:60px 20px;
+    text-align:center;color:#7c8f83;font-size:14px;
+  }
+
+  .results-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+  .results-toolbar .stat{font-size:12.5px;color:var(--green-fairway);font-weight:600;}
+  .toolbar-actions{display:flex;gap:8px;}
+  .toolbar-actions button{
+    background:var(--white);border:1px solid var(--green-deep);color:var(--green-deep);
+    padding:8px 14px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;
+  }
+  .toolbar-actions button:hover{background:var(--green-mist);}
+  .toolbar-actions button.primary{background:var(--green-deep);color:var(--white);}
+
+  .tickets{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;}
+  .ticket{
+    background:var(--white);border:1.5px solid var(--green-deep);border-radius:12px;
+    position:relative;overflow:hidden;
+  }
+  .ticket::before{
+    content:"";position:absolute;top:44px;left:-8px;width:16px;height:16px;background:var(--cream);
+    border:1.5px solid var(--green-deep);border-radius:50%;
+  }
+  .ticket::after{
+    content:"";position:absolute;top:44px;right:-8px;width:16px;height:16px;background:var(--cream);
+    border:1.5px solid var(--green-deep);border-radius:50%;
+  }
+  .ticket-head{
+    background:var(--green-deep);color:var(--green-mist);padding:10px 16px;
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .ticket-head .g-num{font-family:'Inter',sans-serif;font-weight:900;font-size:20px;color:var(--white);}
+  .ticket-head .g-avg{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;}
+  .ticket-body{padding:16px 14px 12px;border-top:1px dashed var(--line);}
+  .member{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 6px;border-bottom:1px dashed var(--line);cursor:grab;font-size:13px;
+    border-radius:6px;transition:background .12s ease, box-shadow .12s ease, transform .12s ease;
+  }
+  .member:last-child{border-bottom:none;}
+  .member:hover{background:var(--green-mist);box-shadow:0 1px 4px rgba(27,67,50,.15);}
+  .member:active{cursor:grabbing;transform:scale(0.98);}
+  .member.drag-over{
+    background:var(--sand);outline:2px dashed var(--green-deep);outline-offset:-2px;
+  }
+  .drag-handle{color:#a9b8ae;font-size:13px;letter-spacing:-1px;flex-shrink:0;user-select:none;}
+  .member:hover .drag-handle{color:var(--green-deep);}
+  .member-info{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .member-name{font-weight:700;}
+  .member-meta{color:#7c8f83;font-size:11px;}
+  .member-hc{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:700;color:var(--green-fairway);font-size:12px;flex-shrink:0;}
+  .drag-hint{font-size:10.5px;color:#7c8f83;text-align:center;padding:8px 0 2px;font-weight:600;}
+  .swap-banner{
+    display:flex;align-items:center;gap:10px;background:var(--sand);color:var(--ink);
+    border-radius:10px;padding:11px 16px;margin-bottom:16px;font-size:13px;font-weight:700;
+  }
+  .swap-banner .icon{font-size:18px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <h1>組み合わせメーカー</h1>
+    <p>参加者を選んでコンペの組分けを作成</p>
+    <span class="hole-tag">GOLF COMPETITION PAIRING</span>
+  </div>
+
+  <div class="layout">
+
+    <!-- LEFT: config -->
+    <div class="left-col">
+
+      <div class="panel">
+        <h2><span class="num">1</span>参加者を選択</h2>
+        <div class="kintone-sync">
+          <span>kintoneの参加者マスタから<br>最新データを取り込みます</span>
+          <button id="kintoneSyncBtn" onclick="requestKintoneSync()">🔄 kintone情報を取得</button>
+        </div>
+        <div class="select-actions">
+          <button onclick="selectAll(true)">全員選択</button>
+          <button onclick="selectAll(false)">全員解除</button>
+        </div>
+        <div class="participant-list" id="participantList"></div>
+        <div class="count-badge" id="countBadge"></div>
+
+        <div class="add-form-card">
+          <p class="add-form-title">参加者を追加</p>
+          <div class="add-form">
+            <label>氏名<input id="newName" placeholder="例：田中 健一"></label>
+            <label>会社・団体<input id="newCompany" placeholder="例：サイボウズ株式会社"></label>
+            <label>平均スコア<input id="newHandicap" placeholder="例：95" type="number" step="0.1"></label>
+            <label>性別(任意)<input id="newGender" placeholder="例：男性"></label>
+          </div>
+          <button class="add-form-submit" onclick="addParticipant()">＋ 参加者を追加</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">2</span>組分け設定</h2>
+        <div class="field-row">
+          <label>1組あたりの人数</label>
+          <input type="number" id="groupSize" value="4" min="2" max="6">
+        </div>
+        <label class="opt"><input type="checkbox" id="balanceHandicap"> 平均スコアを均等に分散</label>
+        <label class="opt"><input type="checkbox" id="splitCompany"> 同じ会社・団体の人を分ける</label>
+
+        <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px;">
+          <label class="opt" style="font-weight:700;">指定した人同士の同組・別組指定</label>
+          <div class="pair-form">
+            <select id="pairA"></select>
+            <select id="pairB"></select>
+            <div class="radios">
+              <label><input type="radio" name="pairType" value="together" checked> 同組にする</label>
+              <label><input type="radio" name="pairType" value="apart"> 別組にする</label>
+            </div>
+            <button class="pair-add-btn" onclick="addPairConstraint()">この条件を追加</button>
+          </div>
+          <div class="chip-list" id="pairChips"></div>
+        </div>
+      </div>
+
+      <button class="generate-btn" onclick="generateGroups()">⛳ 組み合わせを作成</button>
+    </div>
+
+    <!-- RIGHT: results -->
+    <div class="right-col">
+      <div id="resultsArea">
+        <div class="results-empty">「組み合わせを作成」ボタンを押すと、ここに結果が表示されます。</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let participants = [
+  {id:1, name:"田中 健一", company:"サイボウズ株式会社", handicap:84.0, gender:"男性"},
+  {id:2, name:"佐藤 美咲", company:"サイボウズ株式会社", handicap:92.5, gender:"女性"},
+  {id:3, name:"鈴木 大輔", company:"株式会社ABCトレーディング", handicap:78.0, gender:"男性"},
+  {id:4, name:"高橋 由紀", company:"山田商事株式会社", handicap:105.5, gender:"女性"},
+  {id:5, name:"伊藤 誠", company:"株式会社ABCトレーディング", handicap:88.0, gender:"男性"},
+  {id:6, name:"渡辺 隆", company:"恵比寿建設株式会社", handicap:95.0, gender:"男性"},
+  {id:7, name:"中村 麻衣", company:"恵比寿建設株式会社", handicap:112.0, gender:"女性"},
+  {id:8, name:"小林 誠一", company:"株式会社フジワラ物流", handicap:82.5, gender:"男性"},
+  {id:9, name:"加藤 陽子", company:"株式会社ミナト保険", handicap:98.5, gender:"女性"},
+  {id:10, name:"山本 浩二", company:"東海電機株式会社", handicap:77.0, gender:"男性"},
+  {id:11, name:"松本 さくら", company:"グリーンフィールズ商会", handicap:104.0, gender:"女性"},
+  {id:12, name:"井上 健太", company:"株式会社ABCトレーディング", handicap:89.0, gender:"男性"},
+  {id:13, name:"木村 千尋", company:"山田商事株式会社", handicap:118.5, gender:"女性"},
+  {id:14, name:"林 修平", company:"東海電機株式会社", handicap:91.5, gender:"男性"},
+  {id:15, name:"斎藤 亮", company:"サイボウズ株式会社", handicap:85.0, gender:"男性"},
+  {id:16, name:"清水 直樹", company:"株式会社フジワラ物流", handicap:100.0, gender:"男性"},
+  {id:17, name:"山口 恵美", company:"株式会社ミナト保険", handicap:96.0, gender:"女性"},
+  {id:18, name:"森田 拓也", company:"グリーンフィールズ商会", handicap:80.5, gender:"男性"},
+  {id:19, name:"池田 美穂", company:"恵比寿建設株式会社", handicap:121.0, gender:"女性"},
+  {id:20, name:"橋本 和也", company:"株式会社ABCトレーディング", handicap:93.5, gender:"男性"},
+  {id:21, name:"石川 優子", company:"山田商事株式会社", handicap:88.5, gender:"女性"},
+  {id:22, name:"前田 隼人", company:"東海電機株式会社", handicap:75.5, gender:"男性"},
+  {id:23, name:"藤田 麻由", company:"サイボウズ株式会社", handicap:107.0, gender:"女性"},
+  {id:24, name:"岡田 慎一", company:"株式会社ミナト保険", handicap:102.5, gender:"男性"},
+  {id:25, name:"長谷川 智子", company:"グリーンフィールズ商会", handicap:115.5, gender:"女性"},
+];
+let nextId = 26;
+
+function fmtScore(v){ return (v===null || v===undefined || isNaN(v)) ? '-' : Math.round(v); }
+let selectedIds = new Set(participants.map(p=>p.id));
+let pairConstraints = []; // {a,b,type}
+let lastAssignment = null;
+
+// ここにGASのデプロイURL(.../exec)を設定すると、ボタンで直接kintoneから取得できるようになります
+// 未設定(空文字)の間は、ボタンを押すとチャット経由での取得依頼になります
+const GAS_ENDPOINT = '';
+
+function requestKintoneSync(){
+  if(GAS_ENDPOINT){
+    fetchFromGas();
+    return;
+  }
+  if(typeof sendPrompt === 'function'){
+    sendPrompt('kintoneの「ゴルフコンペ参加者マスタ」(アプリID: 3113)から最新の参加者データを取得して、組み合わせメーカーの参加者リストをその内容に更新してください。');
+  } else {
+    alert('この環境ではチャットとの連携が利用できません。');
+  }
+}
+
+async function fetchFromGas(){
+  const btn = document.getElementById('kintoneSyncBtn');
+  const originalLabel = btn.textContent;
+  btn.textContent = '取得中...';
+  btn.disabled = true;
+  try{
+    const res = await fetch(GAS_ENDPOINT);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if(data.error) throw new Error(data.message || '取得エラー');
+
+    participants = data.participants
+      .filter(p => p.status !== '休会')
+      .map(p => ({ id: p.id, name: p.name, company: p.company, handicap: p.handicap, gender: p.gender }));
+    nextId = (participants.length ? Math.max(...participants.map(p=>p.id)) : 0) + 1;
+    selectedIds = new Set(participants.map(p=>p.id));
+    renderParticipantList();
+    alert(`kintoneから${participants.length}名を取得しました`);
+  }catch(err){
+    console.warn('GAS経由の取得に失敗。チャット経由にフォールバックします。', err);
+    if(typeof sendPrompt === 'function'){
+      sendPrompt('kintoneの「ゴルフコンペ参加者マスタ」(アプリID: 3113)から最新の参加者データを取得して、組み合わせメーカーの参加者リストをその内容に更新してください。');
+    } else {
+      alert('kintoneへの接続に失敗しました: ' + err.message);
+    }
+  }finally{
+    btn.textContent = originalLabel;
+    btn.disabled = false;
+  }
+}
+
+function renderParticipantList(){
+  const list = document.getElementById('participantList');
+  list.innerHTML = '';
+  participants.forEach(p=>{
+    const row = document.createElement('div');
+    row.className = 'p-row';
+    row.innerHTML = `
+      <input type="checkbox" ${selectedIds.has(p.id)?'checked':''} onchange="toggleSelect(${p.id}, this.checked)">
+      <span class="p-name">${p.name}</span>
+      <span class="p-meta">${p.company||''}</span>
+      <span class="p-hc">${fmtScore(p.handicap)}</span>
+      <button class="p-remove" onclick="removeParticipant(${p.id})" title="削除">✕</button>
+    `;
+    list.appendChild(row);
+  });
+  document.getElementById('countBadge').textContent = `${selectedIds.size} / ${participants.length} 名 選択中`;
+  renderPairSelects();
+}
+
+function toggleSelect(id, checked){
+  if(checked) selectedIds.add(id); else selectedIds.delete(id);
+  document.getElementById('countBadge').textContent = `${selectedIds.size} / ${participants.length} 名 選択中`;
+}
+function selectAll(v){
+  selectedIds = v ? new Set(participants.map(p=>p.id)) : new Set();
+  renderParticipantList();
+}
+function addParticipant(){
+  const name = document.getElementById('newName').value.trim();
+  if(!name){ alert('氏名を入力してください'); return; }
+  const company = document.getElementById('newCompany').value.trim();
+  const hc = parseFloat(document.getElementById('newHandicap').value);
+  const gender = document.getElementById('newGender').value.trim();
+  const p = {id:nextId++, name, company, handicap: isNaN(hc)?null:hc, gender};
+  participants.push(p);
+  selectedIds.add(p.id);
+  document.getElementById('newName').value='';
+  document.getElementById('newCompany').value='';
+  document.getElementById('newHandicap').value='';
+  document.getElementById('newGender').value='';
+  renderParticipantList();
+}
+function removeParticipant(id){
+  participants = participants.filter(p=>p.id!==id);
+  selectedIds.delete(id);
+  pairConstraints = pairConstraints.filter(c=>c.a!==id && c.b!==id);
+  renderParticipantList();
+  renderPairChips();
+}
+
+function renderPairSelects(){
+  const a = document.getElementById('pairA');
+  const b = document.getElementById('pairB');
+  const opts = participants.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  a.innerHTML = opts;
+  b.innerHTML = opts;
+}
+function addPairConstraint(){
+  const a = parseInt(document.getElementById('pairA').value);
+  const b = parseInt(document.getElementById('pairB').value);
+  const type = document.querySelector('input[name=pairType]:checked').value;
+  if(a===b){ alert('異なる2名を選んでください'); return; }
+  pairConstraints.push({a,b,type});
+  renderPairChips();
+}
+function renderPairChips(){
+  const box = document.getElementById('pairChips');
+  box.innerHTML = '';
+  pairConstraints.forEach((c,i)=>{
+    const pa = participants.find(p=>p.id===c.a);
+    const pb = participants.find(p=>p.id===c.b);
+    if(!pa || !pb) return;
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (c.type==='apart' ? ' apart':'');
+    chip.innerHTML = `${pa.name} ${c.type==='together'?'＋':'✕'} ${pb.name} <button onclick="removePair(${i})">✕</button>`;
+    box.appendChild(chip);
+  });
+}
+function removePair(i){ pairConstraints.splice(i,1); renderPairChips(); }
+
+// ---------- grouping algorithm ----------
+function generateGroups(){
+  const groupSize = parseInt(document.getElementById('groupSize').value) || 4;
+  const balanceHandicap = document.getElementById('balanceHandicap').checked;
+  const splitCompany = document.getElementById('splitCompany').checked;
+  const selected = participants.filter(p=>selectedIds.has(p.id));
+
+  if(selected.length < 2){ alert('2名以上を選択してください'); return; }
+
+  const numGroups = Math.max(1, Math.round(selected.length / groupSize));
+  const base = Math.floor(selected.length / numGroups);
+  const remainder = selected.length % numGroups;
+  const capacities = Array.from({length:numGroups}, (_,i)=> base + (i < remainder ? 1 : 0));
+
+  // initial assignment
+  let groups = Array.from({length:numGroups}, ()=>[]);
+  if(balanceHandicap){
+    const sorted = [...selected].sort((x,y)=> (y.handicap??0) - (x.handicap??0));
+    let dir = 1, g = 0;
+    for(const p of sorted){
+      // find next group in snake order with room
+      let tries = 0;
+      while(groups[g].length >= capacities[g] && tries < numGroups){ g += dir; if(g>=numGroups){g=numGroups-1;dir=-1;} if(g<0){g=0;dir=1;} tries++; }
+      groups[g].push(p);
+      g += dir;
+      if(g>=numGroups){g=numGroups-1;dir=-1;}
+      if(g<0){g=0;dir=1;}
+    }
+  } else {
+    const shuffled = [...selected].sort(()=>Math.random()-0.5);
+    let idx = 0;
+    for(let gi=0; gi<numGroups; gi++){
+      for(let k=0; k<capacities[gi]; k++){ groups[gi].push(shuffled[idx++]); }
+    }
+  }
+
+  function cost(gs){
+    let c = 0;
+    if(splitCompany){
+      gs.forEach(g=>{
+        const counts = {};
+        g.forEach(p=>{ if(p.company){ counts[p.company]=(counts[p.company]||0)+1; } });
+        Object.values(counts).forEach(n=>{ if(n>1) c += (n-1)*12; });
+      });
+    }
+    pairConstraints.forEach(pc=>{
+      const gi = gs.findIndex(g=>g.some(p=>p.id===pc.a));
+      const gj = gs.findIndex(g=>g.some(p=>p.id===pc.b));
+      if(pc.type==='together' && gi!==gj) c += 20;
+      if(pc.type==='apart' && gi===gj) c += 20;
+    });
+    if(balanceHandicap){
+      const avgs = gs.map(g=> g.length? g.reduce((s,p)=>s+(p.handicap??0),0)/g.length : 0);
+      const mean = avgs.reduce((a,b)=>a+b,0)/avgs.length;
+      const variance = avgs.reduce((a,v)=>a+(v-mean)**2,0)/avgs.length;
+      c += variance * 0.6;
+    }
+    return c;
+  }
+
+  // local search (simulated annealing-lite) via swapping members between groups
+  let best = groups.map(g=>[...g]);
+  let bestCost = cost(best);
+  let current = best.map(g=>[...g]);
+  let curCost = bestCost;
+  let T = 5.0;
+  for(let iter=0; iter<4000; iter++){
+    T *= 0.9992;
+    const gi = Math.floor(Math.random()*numGroups);
+    let gj = Math.floor(Math.random()*numGroups);
+    if(numGroups>1) while(gj===gi) gj = Math.floor(Math.random()*numGroups);
+    if(current[gi].length===0 || current[gj].length===0) continue;
+    const pi = Math.floor(Math.random()*current[gi].length);
+    const pj = Math.floor(Math.random()*current[gj].length);
+    const trial = current.map(g=>[...g]);
+    const tmp = trial[gi][pi];
+    trial[gi][pi] = trial[gj][pj];
+    trial[gj][pj] = tmp;
+    const tCost = cost(trial);
+    const delta = tCost - curCost;
+    if(delta < 0 || Math.random() < Math.exp(-delta / Math.max(T,0.01))){
+      current = trial; curCost = tCost;
+      if(curCost < bestCost){ bestCost = curCost; best = current.map(g=>[...g]); }
+    }
+  }
+
+  lastAssignment = best;
+  renderResults(best);
+}
+
+function renderResults(groups){
+  const area = document.getElementById('resultsArea');
+  const totalPeople = groups.reduce((s,g)=>s+g.length,0);
+  let html = `<div class="swap-banner"><span class="icon">↔️</span><span>メンバーの名前を別の組の上にドラッグ&ドロップすると、その2人を入れ替えられます</span></div>`;
+  html += `<div class="results-toolbar">
+    <div class="stat">${groups.length}組 ／ 合計${totalPeople}名</div>
+    <div class="toolbar-actions">
+      <button onclick="generateGroups()">🔀 再抽選</button>
+      <button class="primary" onclick="copyResults()">📋 テキストをコピー</button>
+    </div>
+  </div>`;
+  html += `<div class="tickets">`;
+  groups.forEach((g, gi)=>{
+    const avg = g.length ? Math.round(g.reduce((s,p)=>s+(p.handicap??0),0)/g.length) : '-';
+    html += `<div class="ticket">
+      <div class="ticket-head"><span class="g-num">組 ${gi+1}</span><span class="g-avg">平均スコア ${avg}</span></div>
+      <div class="ticket-body" data-group="${gi}">`;
+    g.forEach((p, pi)=>{
+      html += `<div class="member" draggable="true" data-group="${gi}" data-idx="${pi}" title="ドラッグして他のメンバーと入れ替え">
+        <span class="drag-handle">⠿</span>
+        <span class="member-info"><span class="member-name">${p.name}</span><span class="member-meta">${p.company||''}</span></span>
+        <span class="member-hc">${fmtScore(p.handicap)}</span>
+      </div>`;
+    });
+    html += `</div><div class="drag-hint">⇅ ドラッグして入れ替え</div></div>`;
+  });
+  html += `</div>`;
+  area.innerHTML = html;
+  attachDragHandlers();
+}
+
+function attachDragHandlers(){
+  const members = document.querySelectorAll('.member');
+  let dragSrc = null;
+  members.forEach(el=>{
+    el.addEventListener('dragstart', e=>{
+      dragSrc = {group: parseInt(el.dataset.group), idx: parseInt(el.dataset.idx)};
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragover', e=>{ e.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', ()=> el.classList.remove('drag-over'));
+    el.addEventListener('drop', e=>{
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      const dst = {group: parseInt(el.dataset.group), idx: parseInt(el.dataset.idx)};
+      if(!dragSrc) return;
+      const tmp = lastAssignment[dst.group][dst.idx];
+      lastAssignment[dst.group][dst.idx] = lastAssignment[dragSrc.group][dragSrc.idx];
+      lastAssignment[dragSrc.group][dragSrc.idx] = tmp;
+      renderResults(lastAssignment);
+    });
+  });
+}
+
+function copyResults(){
+  if(!lastAssignment) return;
+  let text = '';
+  lastAssignment.forEach((g, gi)=>{
+    text += `組${gi+1}: ` + g.map(p=>`${p.name}(${p.company||'-'} / 平均スコア${fmtScore(p.handicap)})`).join('、') + '\n';
+  });
+  navigator.clipboard.writeText(text).then(()=>{
+    alert('組み合わせ結果をコピーしました');
+  });
+}
+
+renderParticipantList();
+</script>
+</body>
+</html>
