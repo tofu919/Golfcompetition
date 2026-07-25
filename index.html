@@ -663,11 +663,12 @@ function attachDragHandlers(){
 
 function copyResults(){
   if(!lastAssignment) return;
-  let text = '';
-  lastAssignment.forEach((g, gi)=>{
-    const time = groupStartTimes[gi] ? `[${groupStartTimes[gi]}スタート] ` : '';
-    text += `${time}組${gi+1}: ` + g.map(p=>`${p.name}(${p.company||'-'} / 平均スコア${fmtScore(p.handicap)})`).join('、') + '\n';
+  const blocks = lastAssignment.map((g, gi)=>{
+    const timeLabel = groupStartTimes[gi] ? `[${groupStartTimes[gi]}スタート]` : '';
+    const names = g.map(p=>`${p.name}(${p.company||'-'})`).join('、');
+    return `${gi+1}組目${timeLabel} \n${names}`;
   });
+  const text = blocks.join('\n\n');
   navigator.clipboard.writeText(text).then(()=>{
     alert('組み合わせ結果をコピーしました');
   });
