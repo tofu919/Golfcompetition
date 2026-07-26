@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>組み合わせメーカー | ゴルフコンペ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Serif+JP:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -337,11 +337,7 @@ function requestKintoneSync(){
     fetchFromGas();
     return;
   }
-  if(typeof sendPrompt === 'function'){
-    sendPrompt('kintoneの「ゴルフコンペ参加者マスタ」(アプリID: 3113)から最新の参加者データを取得して、組み合わせメーカーの参加者リストをその内容に更新してください。');
-  } else {
-    alert('この環境ではチャットとの連携が利用できません。');
-  }
+  alert('GAS_ENDPOINTが設定されていません。index.html内の設定を確認してください。');
 }
 
 function fetchFromGas(){
@@ -361,19 +357,17 @@ function fetchFromGas(){
     btn.disabled = false;
   }
 
-  function fallbackToChat(reason){
-    console.warn('GAS経由の取得に失敗。チャット経由にフォールバックします。', reason);
-    if(typeof sendPrompt === 'function'){
-      sendPrompt('kintoneの「ゴルフコンペ参加者マスタ」(アプリID: 3113)から最新の参加者データを取得して、組み合わせメーカーの参加者リストをその内容に更新してください。');
-    } else {
-      alert('kintoneへの接続に失敗しました: ' + (reason && reason.message ? reason.message : reason));
-    }
+  function showError(reason){
+    console.warn('kintone取得に失敗しました:', reason);
+    const msg = (reason && reason.message) ? reason.message : reason;
+    alert('kintoneからの取得に失敗しました(' + msg + ')。電波状況の良い環境でもう一度お試しください。');
   }
 
+  // モバイル回線やGASのコールドスタートを考慮し、少し長めの25秒でタイムアウト
   const timeoutId = setTimeout(()=>{
     cleanup();
-    fallbackToChat('タイムアウトしました');
-  }, 10000);
+    showError('タイムアウトしました(25秒)');
+  }, 25000);
 
   window[callbackName] = function(data){
     cleanup();
@@ -387,13 +381,13 @@ function fetchFromGas(){
       renderParticipantList();
       alert(`kintoneから${participants.length}名を取得しました`);
     }catch(err){
-      fallbackToChat(err);
+      showError(err);
     }
   };
 
   scriptEl = document.createElement('script');
   scriptEl.src = GAS_ENDPOINT + (GAS_ENDPOINT.includes('?') ? '&' : '?') + 'callback=' + callbackName;
-  scriptEl.onerror = function(){ cleanup(); fallbackToChat('スクリプトの読み込みに失敗しました'); };
+  scriptEl.onerror = function(){ cleanup(); showError('スクリプトの読み込みに失敗しました(通信エラーの可能性)'); };
   document.body.appendChild(scriptEl);
 }
 
@@ -609,6 +603,7 @@ function renderResults(groups){
       <button onclick="generateGroups()">🔀 再抽選</button>
       <button class="primary" onclick="copyResults()">📋 テキストをコピー</button>
       <button id="pdfExportBtn" class="primary" onclick="exportPdf()">🖨 PDFに出力</button>
+      <button id="pngExportBtn" class="primary" onclick="exportPng()">🖼 PNGに出力</button>
     </div>
   </div>`;
   html += `<div class="tee-batch">
@@ -669,10 +664,10 @@ function buildPdfTable(){
   wrap.style.position = 'fixed';
   wrap.style.left = '-9999px';
   wrap.style.top = '0';
-  wrap.style.width = '720px';
+  wrap.style.width = '760px';
   wrap.style.background = '#ffffff';
-  wrap.style.padding = '28px';
-  wrap.style.fontFamily = "'Inter', sans-serif";
+  wrap.style.padding = '36px 40px';
+  wrap.style.fontFamily = "'Noto Serif JP', serif";
 
   let rows = '';
   lastAssignment.forEach((g, gi)=>{
@@ -680,7 +675,7 @@ function buildPdfTable(){
     g.forEach((p, pi)=>{
       rows += '<tr>';
       if(pi === 0){
-        rows += `<td class="pdf-group-cell" rowspan="${g.length}">${gi+1}組目</td>`;
+        rows += `<td class="pdf-group-cell" rowspan="${g.length}">第${gi+1}組</td>`;
         rows += `<td class="pdf-time-cell" rowspan="${g.length}">${time}</td>`;
       }
       rows += `<td class="pdf-name-cell">${p.name}</td>`;
@@ -691,72 +686,102 @@ function buildPdfTable(){
 
   const today = new Date().toLocaleDateString('ja-JP');
   wrap.innerHTML = `
-    <h2 style="font-size:21px;font-weight:800;color:#1B4332;margin:0 0 4px;">組み合わせ表</h2>
-    <p style="font-size:12px;color:#6b7c70;margin:0 0 18px;">作成日: ${today}</p>
+    <div style="border-bottom:3px solid #2E86AB;padding-bottom:14px;margin-bottom:22px;">
+      <h2 style="font-size:25px;font-weight:700;color:#0F3C4C;margin:0 0 6px;letter-spacing:.04em;">組み合わせ表</h2>
+      <p style="font-size:12.5px;color:#5A7C8A;margin:0;">作成日　${today}</p>
+    </div>
     <table style="width:100%;border-collapse:collapse;">
       <thead>
         <tr>
-          <th class="pdf-th" style="width:80px;">組</th>
-          <th class="pdf-th" style="width:100px;">スタート時刻</th>
+          <th class="pdf-th" style="width:86px;">組</th>
+          <th class="pdf-th" style="width:120px;">スタート時刻</th>
           <th class="pdf-th" style="text-align:left;">氏名</th>
           <th class="pdf-th" style="text-align:left;">会社・団体</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
+    <p style="font-size:11px;color:#8CA9B5;margin:18px 0 0;text-align:right;">組み合わせメーカー 作成</p>
   `;
   document.body.appendChild(wrap);
 
   wrap.querySelectorAll('.pdf-th').forEach(th=>{
-    th.style.background = '#1B4332';
-    th.style.color = '#FBF8F1';
-    th.style.padding = '10px 12px';
-    th.style.fontSize = '13px';
-    th.style.fontWeight = '700';
-    th.style.border = '1px solid #1B4332';
+    th.style.background = '#2E86AB';
+    th.style.color = '#FFFFFF';
+    th.style.padding = '11px 14px';
+    th.style.fontSize = '13.5px';
+    th.style.fontWeight = '600';
+    th.style.letterSpacing = '.03em';
+    th.style.border = '1px solid #2E86AB';
+    th.style.whiteSpace = 'nowrap';
     if(!th.style.textAlign) th.style.textAlign = 'center';
   });
   wrap.querySelectorAll('td').forEach(td=>{
-    td.style.border = '1px solid #CFE3D6';
-    td.style.padding = '9px 12px';
-    td.style.fontSize = '13px';
+    td.style.border = '1px solid #BFE0EC';
+    td.style.padding = '10px 14px';
+    td.style.fontSize = '14px';
+    td.style.whiteSpace = 'nowrap';
   });
   wrap.querySelectorAll('.pdf-group-cell').forEach(td=>{
     td.style.textAlign = 'center';
-    td.style.fontWeight = '800';
-    td.style.color = '#1B4332';
-    td.style.background = '#D8F3DC';
+    td.style.fontWeight = '700';
+    td.style.color = '#0F3C4C';
+    td.style.background = '#EAF6FA';
     td.style.verticalAlign = 'middle';
-    td.style.fontSize = '15px';
+    td.style.fontSize = '16px';
+    td.style.letterSpacing = '.05em';
   });
   wrap.querySelectorAll('.pdf-time-cell').forEach(td=>{
     td.style.textAlign = 'center';
     td.style.fontWeight = '700';
-    td.style.color = '#40916C';
+    td.style.color = '#1D6F8C';
+    td.style.background = '#EAF6FA';
     td.style.verticalAlign = 'middle';
+    td.style.fontSize = '15px';
   });
   wrap.querySelectorAll('.pdf-name-cell').forEach(td=>{
-    td.style.fontWeight = '700';
-    td.style.color = '#1D2A1F';
+    td.style.fontWeight = '600';
+    td.style.color = '#1F2D3A';
   });
   wrap.querySelectorAll('.pdf-company-cell').forEach(td=>{
-    td.style.color = '#5c6f62';
+    td.style.color = '#5A7C8A';
+    td.style.whiteSpace = 'normal';
   });
 
   return wrap;
 }
 
+async function renderResultCanvas(){
+  const tableEl = buildPdfTable();
+  try{
+    if(document.fonts && document.fonts.ready){ await document.fonts.ready; }
+    const canvas = await html2canvas(tableEl, { scale: 2, backgroundColor: '#ffffff' });
+    return canvas;
+  } finally {
+    if(tableEl && tableEl.parentNode) tableEl.parentNode.removeChild(tableEl);
+  }
+}
+
+async function withButtonLoading(btn, loadingLabel, fn){
+  const originalLabel = btn.textContent;
+  btn.textContent = loadingLabel;
+  btn.disabled = true;
+  try{
+    await fn();
+  }catch(err){
+    console.error('出力に失敗:', err);
+    alert('出力に失敗しました: ' + err.message);
+  }finally{
+    btn.textContent = originalLabel;
+    btn.disabled = false;
+  }
+}
+
 async function exportPdf(){
   if(!lastAssignment){ alert('先に組み合わせを作成してください'); return; }
   const btn = document.getElementById('pdfExportBtn');
-  const originalLabel = btn.textContent;
-  btn.textContent = '生成中...';
-  btn.disabled = true;
-
-  let tableEl = null;
-  try{
-    tableEl = buildPdfTable();
-    const canvas = await html2canvas(tableEl, { scale: 2, backgroundColor: '#ffffff' });
+  await withButtonLoading(btn, '生成中...', async ()=>{
+    const canvas = await renderResultCanvas();
     const imgData = canvas.toDataURL('image/png');
 
     const { jsPDF } = window.jspdf;
@@ -780,14 +805,19 @@ async function exportPdf(){
     }
 
     pdf.save('組み合わせ表.pdf');
-  }catch(err){
-    console.error('PDF生成に失敗:', err);
-    alert('PDFの生成に失敗しました: ' + err.message);
-  }finally{
-    if(tableEl && tableEl.parentNode) tableEl.parentNode.removeChild(tableEl);
-    btn.textContent = originalLabel;
-    btn.disabled = false;
-  }
+  });
+}
+
+async function exportPng(){
+  if(!lastAssignment){ alert('先に組み合わせを作成してください'); return; }
+  const btn = document.getElementById('pngExportBtn');
+  await withButtonLoading(btn, '生成中...', async ()=>{
+    const canvas = await renderResultCanvas();
+    const link = document.createElement('a');
+    link.download = '組み合わせ表.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
 }
 
 function copyResults(){
