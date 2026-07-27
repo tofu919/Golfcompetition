@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>組み合わせメーカー | ゴルフコンペ</title>
+<title>Golf competition maker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Serif+JP:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -79,6 +79,10 @@
   .p-row input[type=checkbox]{accent-color:var(--green-fairway);width:16px;height:16px;flex-shrink:0;}
   .p-text{display:flex;flex-direction:column;min-width:0;line-height:1.35;}
   .p-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .p-position{
+    display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;color:var(--green-fairway);
+    background:var(--green-mist);padding:1px 6px;border-radius:8px;vertical-align:middle;
+  }
   .p-meta{color:#6b7c70;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .p-hc{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:700;color:var(--green-fairway);font-size:12px;min-width:30px;text-align:right;flex-shrink:0;}
   .p-remove{background:none;border:none;color:#b7c4bc;cursor:pointer;font-size:14px;padding:2px 4px;flex-shrink:0;}
@@ -247,7 +251,7 @@
 <div class="app">
 
   <div class="header">
-    <h1>⛳ 組み合わせメーカー</h1>
+    <h1>⛳ Golf competition maker</h1>
     <p>参加者を選んでコンペの組分けを作成</p>
   </div>
 
@@ -275,6 +279,7 @@
             <label>氏名<input id="newName" placeholder="例：田中 健一"></label>
             <label>会社・団体<input id="newCompany" placeholder="例：サイボウズ株式会社"></label>
             <label>平均スコア<input id="newHandicap" placeholder="例：95" type="number" step="0.1"></label>
+            <label>役職(任意)<input id="newPosition" placeholder="例：部長"></label>
             <label>性別(任意)<input id="newGender" placeholder="例：男性"></label>
           </div>
           <button class="add-form-submit" onclick="addParticipant()">＋ 参加者を追加</button>
@@ -375,7 +380,7 @@ function fetchFromGas(){
       if(data.error) throw new Error(data.message || '取得エラー');
       participants = data.participants
         .filter(p => p.status !== '休会')
-        .map(p => ({ id: p.id, name: p.name, company: p.company, handicap: p.handicap, gender: p.gender }));
+        .map(p => ({ id: p.id, name: p.name, company: p.company, handicap: p.handicap, position: p.position, gender: p.gender }));
       nextId = (participants.length ? Math.max(...participants.map(p=>p.id)) : 0) + 1;
       selectedIds = new Set(participants.map(p=>p.id));
       renderParticipantList();
@@ -403,7 +408,7 @@ function renderParticipantList(){
       row.innerHTML = `
         <input type="checkbox" ${selectedIds.has(p.id)?'checked':''} onchange="toggleSelect(${p.id}, this.checked)">
         <span class="p-text">
-          <span class="p-name">${p.name}</span>
+          <span class="p-name">${p.name}${p.position ? `<span class="p-position">${p.position}</span>` : ''}</span>
           <span class="p-meta">${p.company||''}</span>
         </span>
         <span class="p-hc">${fmtScore(p.handicap)}</span>
@@ -429,13 +434,15 @@ function addParticipant(){
   if(!name){ alert('氏名を入力してください'); return; }
   const company = document.getElementById('newCompany').value.trim();
   const hc = parseFloat(document.getElementById('newHandicap').value);
+  const position = document.getElementById('newPosition').value.trim();
   const gender = document.getElementById('newGender').value.trim();
-  const p = {id:nextId++, name, company, handicap: isNaN(hc)?null:hc, gender};
+  const p = {id:nextId++, name, company, handicap: isNaN(hc)?null:hc, position, gender};
   participants.push(p);
   selectedIds.add(p.id);
   document.getElementById('newName').value='';
   document.getElementById('newCompany').value='';
   document.getElementById('newHandicap').value='';
+  document.getElementById('newPosition').value='';
   document.getElementById('newGender').value='';
   renderParticipantList();
 }
@@ -625,7 +632,7 @@ function renderResults(groups){
     g.forEach((p, pi)=>{
       html += `<div class="member" draggable="true" data-group="${gi}" data-idx="${pi}" title="ドラッグして他のメンバーと入れ替え">
         <span class="drag-handle">⠿</span>
-        <span class="member-info"><span class="member-name">${p.name}</span><span class="member-meta">${p.company||''}</span></span>
+        <span class="member-info"><span class="member-name">${p.name}${p.position ? `<span class="p-position">${p.position}</span>` : ''}</span><span class="member-meta">${p.company||''}</span></span>
         <span class="member-hc">${fmtScore(p.handicap)}</span>
       </div>`;
     });
@@ -679,6 +686,7 @@ function buildPdfTable(){
         rows += `<td class="pdf-time-cell" rowspan="${g.length}">${time}</td>`;
       }
       rows += `<td class="pdf-name-cell">${p.name}</td>`;
+      rows += `<td class="pdf-position-cell">${p.position || '-'}</td>`;
       rows += `<td class="pdf-company-cell">${p.company || '-'}</td>`;
       rows += '</tr>';
     });
@@ -696,12 +704,13 @@ function buildPdfTable(){
           <th class="pdf-th" style="width:86px;">組</th>
           <th class="pdf-th" style="width:120px;">スタート時刻</th>
           <th class="pdf-th" style="text-align:left;">氏名</th>
+          <th class="pdf-th" style="width:90px;">役職</th>
           <th class="pdf-th" style="text-align:left;">会社・団体</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
-    <p style="font-size:11px;color:#8CA9B5;margin:18px 0 0;text-align:right;">組み合わせメーカー 作成</p>
+    <p style="font-size:11px;color:#8CA9B5;margin:18px 0 0;text-align:right;">Golf competition maker 作成</p>
   `;
   document.body.appendChild(wrap);
 
@@ -742,6 +751,11 @@ function buildPdfTable(){
   wrap.querySelectorAll('.pdf-name-cell').forEach(td=>{
     td.style.fontWeight = '600';
     td.style.color = '#1F2D3A';
+  });
+  wrap.querySelectorAll('.pdf-position-cell').forEach(td=>{
+    td.style.color = '#1D6F8C';
+    td.style.textAlign = 'center';
+    td.style.fontSize = '12.5px';
   });
   wrap.querySelectorAll('.pdf-company-cell').forEach(td=>{
     td.style.color = '#5A7C8A';
@@ -824,7 +838,10 @@ function copyResults(){
   if(!lastAssignment) return;
   const blocks = lastAssignment.map((g, gi)=>{
     const timeLabel = groupStartTimes[gi] ? `[${groupStartTimes[gi]}スタート]` : '';
-    const names = g.map(p=>`${p.name}(${p.company||'-'})`).join('、');
+    const names = g.map(p=>{
+      const posLabel = p.position ? `${p.position}・` : '';
+      return `${p.name}(${posLabel}${p.company||'-'})`;
+    }).join('、');
     return `${gi+1}組目${timeLabel} \n${names}`;
   });
   const text = blocks.join('\n\n');
