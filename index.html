@@ -328,6 +328,10 @@ let participants = [];
 let nextId = 1;
 
 function fmtScore(v){ return (v===null || v===undefined || isNaN(v)) ? '-' : Math.round(v); }
+function displayPosition(p){
+  const pos = (p && p.position) ? String(p.position).trim() : '';
+  return (pos === '' || pos === '一般') ? '' : pos;
+}
 let selectedIds = new Set(participants.map(p=>p.id));
 let pairConstraints = []; // {a,b,type}
 let lastAssignment = null;
@@ -408,7 +412,7 @@ function renderParticipantList(){
       row.innerHTML = `
         <input type="checkbox" ${selectedIds.has(p.id)?'checked':''} onchange="toggleSelect(${p.id}, this.checked)">
         <span class="p-text">
-          <span class="p-name">${p.name}${p.position ? `<span class="p-position">${p.position}</span>` : ''}</span>
+          <span class="p-name">${p.name}${displayPosition(p) ? `<span class="p-position">${displayPosition(p)}</span>` : ''}</span>
           <span class="p-meta">${p.company||''}</span>
         </span>
         <span class="p-hc">${fmtScore(p.handicap)}</span>
@@ -632,7 +636,7 @@ function renderResults(groups){
     g.forEach((p, pi)=>{
       html += `<div class="member" draggable="true" data-group="${gi}" data-idx="${pi}" title="ドラッグして他のメンバーと入れ替え">
         <span class="drag-handle">⠿</span>
-        <span class="member-info"><span class="member-name">${p.name}${p.position ? `<span class="p-position">${p.position}</span>` : ''}</span><span class="member-meta">${p.company||''}</span></span>
+        <span class="member-info"><span class="member-name">${p.name}${displayPosition(p) ? `<span class="p-position">${displayPosition(p)}</span>` : ''}</span><span class="member-meta">${p.company||''}</span></span>
         <span class="member-hc">${fmtScore(p.handicap)}</span>
       </div>`;
     });
@@ -685,8 +689,8 @@ function buildPdfTable(){
         rows += `<td class="pdf-group-cell" rowspan="${g.length}">第${gi+1}組</td>`;
         rows += `<td class="pdf-time-cell" rowspan="${g.length}">${time}</td>`;
       }
-      rows += `<td class="pdf-name-cell">${p.name}</td>`;
-      rows += `<td class="pdf-position-cell">${p.position || '-'}</td>`;
+      const posBadge = displayPosition(p) ? `<span class="pdf-position-badge">${displayPosition(p)}</span>` : '';
+      rows += `<td class="pdf-name-cell">${p.name}${posBadge}</td>`;
       rows += `<td class="pdf-company-cell">${p.company || '-'}</td>`;
       rows += '</tr>';
     });
@@ -704,7 +708,6 @@ function buildPdfTable(){
           <th class="pdf-th" style="width:86px;">組</th>
           <th class="pdf-th" style="width:120px;">スタート時刻</th>
           <th class="pdf-th" style="text-align:left;">氏名</th>
-          <th class="pdf-th" style="width:90px;">役職</th>
           <th class="pdf-th" style="text-align:left;">会社・団体</th>
         </tr>
       </thead>
@@ -752,10 +755,17 @@ function buildPdfTable(){
     td.style.fontWeight = '600';
     td.style.color = '#1F2D3A';
   });
-  wrap.querySelectorAll('.pdf-position-cell').forEach(td=>{
-    td.style.color = '#1D6F8C';
-    td.style.textAlign = 'center';
-    td.style.fontSize = '12.5px';
+  wrap.querySelectorAll('.pdf-position-badge').forEach(el=>{
+    el.style.display = 'inline-block';
+    el.style.marginLeft = '8px';
+    el.style.fontSize = '11px';
+    el.style.fontWeight = '600';
+    el.style.color = '#1D6F8C';
+    el.style.background = '#EAF6FA';
+    el.style.border = '1px solid #BFE0EC';
+    el.style.padding = '1px 8px';
+    el.style.borderRadius = '9px';
+    el.style.verticalAlign = 'middle';
   });
   wrap.querySelectorAll('.pdf-company-cell').forEach(td=>{
     td.style.color = '#5A7C8A';
@@ -839,7 +849,7 @@ function copyResults(){
   const blocks = lastAssignment.map((g, gi)=>{
     const timeLabel = groupStartTimes[gi] ? `[${groupStartTimes[gi]}スタート]` : '';
     const names = g.map(p=>{
-      const posLabel = p.position ? `${p.position}・` : '';
+      const posLabel = displayPosition(p) ? `${displayPosition(p)}・` : '';
       return `${p.name}(${posLabel}${p.company||'-'})`;
     }).join('、');
     return `${gi+1}組目${timeLabel} \n${names}`;
