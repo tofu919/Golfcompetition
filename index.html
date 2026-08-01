@@ -689,8 +689,8 @@ function buildPdfTable(){
         rows += `<td class="pdf-group-cell" rowspan="${g.length}">第${gi+1}組</td>`;
         rows += `<td class="pdf-time-cell" rowspan="${g.length}">${time}</td>`;
       }
-      const posBadge = displayPosition(p) ? `<span class="pdf-position-badge">${displayPosition(p)}</span>` : '';
-      rows += `<td class="pdf-name-cell">${p.name}${posBadge}</td>`;
+      rows += `<td class="pdf-name-cell">${p.name}</td>`;
+      rows += `<td class="pdf-position-cell">${displayPosition(p)}</td>`;
       rows += `<td class="pdf-company-cell">${p.company || '-'}</td>`;
       rows += '</tr>';
     });
@@ -708,6 +708,7 @@ function buildPdfTable(){
           <th class="pdf-th" style="width:86px;">組</th>
           <th class="pdf-th" style="width:120px;">スタート時刻</th>
           <th class="pdf-th" style="text-align:left;">氏名</th>
+          <th class="pdf-th" style="width:90px;">役職</th>
           <th class="pdf-th" style="text-align:left;">会社・団体</th>
         </tr>
       </thead>
@@ -755,17 +756,11 @@ function buildPdfTable(){
     td.style.fontWeight = '600';
     td.style.color = '#1F2D3A';
   });
-  wrap.querySelectorAll('.pdf-position-badge').forEach(el=>{
-    el.style.display = 'inline-block';
-    el.style.marginLeft = '8px';
-    el.style.fontSize = '11px';
-    el.style.fontWeight = '600';
-    el.style.color = '#1D6F8C';
-    el.style.background = '#EAF6FA';
-    el.style.border = '1px solid #BFE0EC';
-    el.style.padding = '1px 8px';
-    el.style.borderRadius = '9px';
-    el.style.verticalAlign = 'middle';
+  wrap.querySelectorAll('.pdf-position-cell').forEach(td=>{
+    td.style.color = '#1D6F8C';
+    td.style.textAlign = 'center';
+    td.style.fontSize = '13px';
+    td.style.fontWeight = '600';
   });
   wrap.querySelectorAll('.pdf-company-cell').forEach(td=>{
     td.style.color = '#5A7C8A';
