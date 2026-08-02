@@ -278,6 +278,7 @@
           <div class="add-form">
             <label>氏名<input id="newName" placeholder="例：田中 健一"></label>
             <label>会社・団体<input id="newCompany" placeholder="例：サイボウズ株式会社"></label>
+            <label>部署名(任意)<input id="newDepartment" placeholder="例：営業部"></label>
             <label>平均スコア<input id="newHandicap" placeholder="例：95" type="number" step="0.1"></label>
             <label>役職(任意)<input id="newPosition" placeholder="例：部長"></label>
             <label>性別(任意)<input id="newGender" placeholder="例：男性"></label>
@@ -332,6 +333,11 @@ function displayPosition(p){
   const pos = (p && p.position) ? String(p.position).trim() : '';
   return (pos === '' || pos === '一般') ? '' : pos;
 }
+function companyLabel(p){
+  const company = (p && p.company) ? p.company : '';
+  const dept = (p && p.department) ? String(p.department).trim() : '';
+  return dept ? `${company} ／ ${dept}` : company;
+}
 let selectedIds = new Set(participants.map(p=>p.id));
 let pairConstraints = []; // {a,b,type}
 let lastAssignment = null;
@@ -384,7 +390,7 @@ function fetchFromGas(){
       if(data.error) throw new Error(data.message || '取得エラー');
       participants = data.participants
         .filter(p => p.status !== '休会')
-        .map(p => ({ id: p.id, name: p.name, company: p.company, handicap: p.handicap, position: p.position, gender: p.gender }));
+        .map(p => ({ id: p.id, name: p.name, company: p.company, department: p.department, handicap: p.handicap, position: p.position, gender: p.gender }));
       nextId = (participants.length ? Math.max(...participants.map(p=>p.id)) : 0) + 1;
       selectedIds = new Set(participants.map(p=>p.id));
       renderParticipantList();
@@ -413,7 +419,7 @@ function renderParticipantList(){
         <input type="checkbox" ${selectedIds.has(p.id)?'checked':''} onchange="toggleSelect(${p.id}, this.checked)">
         <span class="p-text">
           <span class="p-name">${p.name}${displayPosition(p) ? `<span class="p-position">${displayPosition(p)}</span>` : ''}</span>
-          <span class="p-meta">${p.company||''}</span>
+          <span class="p-meta">${companyLabel(p)}</span>
         </span>
         <span class="p-hc">${fmtScore(p.handicap)}</span>
         <button class="p-remove" onclick="removeParticipant(${p.id})" title="削除">✕</button>
@@ -437,14 +443,16 @@ function addParticipant(){
   const name = document.getElementById('newName').value.trim();
   if(!name){ alert('氏名を入力してください'); return; }
   const company = document.getElementById('newCompany').value.trim();
+  const department = document.getElementById('newDepartment').value.trim();
   const hc = parseFloat(document.getElementById('newHandicap').value);
   const position = document.getElementById('newPosition').value.trim();
   const gender = document.getElementById('newGender').value.trim();
-  const p = {id:nextId++, name, company, handicap: isNaN(hc)?null:hc, position, gender};
+  const p = {id:nextId++, name, company, department, handicap: isNaN(hc)?null:hc, position, gender};
   participants.push(p);
   selectedIds.add(p.id);
   document.getElementById('newName').value='';
   document.getElementById('newCompany').value='';
+  document.getElementById('newDepartment').value='';
   document.getElementById('newHandicap').value='';
   document.getElementById('newPosition').value='';
   document.getElementById('newGender').value='';
@@ -636,7 +644,7 @@ function renderResults(groups){
     g.forEach((p, pi)=>{
       html += `<div class="member" draggable="true" data-group="${gi}" data-idx="${pi}" title="ドラッグして他のメンバーと入れ替え">
         <span class="drag-handle">⠿</span>
-        <span class="member-info"><span class="member-name">${p.name}${displayPosition(p) ? `<span class="p-position">${displayPosition(p)}</span>` : ''}</span><span class="member-meta">${p.company||''}</span></span>
+        <span class="member-info"><span class="member-name">${p.name}${displayPosition(p) ? `<span class="p-position">${displayPosition(p)}</span>` : ''}</span><span class="member-meta">${companyLabel(p)}</span></span>
         <span class="member-hc">${fmtScore(p.handicap)}</span>
       </div>`;
     });
@@ -692,6 +700,7 @@ function buildPdfTable(){
       rows += `<td class="pdf-name-cell">${p.name}</td>`;
       rows += `<td class="pdf-position-cell">${displayPosition(p)}</td>`;
       rows += `<td class="pdf-company-cell">${p.company || '-'}</td>`;
+      rows += `<td class="pdf-department-cell">${p.department || ''}</td>`;
       rows += '</tr>';
     });
   });
@@ -702,14 +711,15 @@ function buildPdfTable(){
       <h2 style="font-size:25px;font-weight:700;color:#0F3C4C;margin:0 0 6px;letter-spacing:.04em;">組み合わせ表</h2>
       <p style="font-size:12.5px;color:#5A7C8A;margin:0;">作成日　${today}</p>
     </div>
-    <table style="width:100%;border-collapse:collapse;">
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
       <thead>
         <tr>
-          <th class="pdf-th" style="width:86px;">組</th>
-          <th class="pdf-th" style="width:120px;">スタート時刻</th>
-          <th class="pdf-th" style="text-align:left;">氏名</th>
-          <th class="pdf-th" style="width:90px;">役職</th>
-          <th class="pdf-th" style="text-align:left;">会社・団体</th>
+          <th class="pdf-th" style="width:52px;">組</th>
+          <th class="pdf-th" style="width:68px;">時刻</th>
+          <th class="pdf-th" style="width:118px;text-align:left;">氏名</th>
+          <th class="pdf-th" style="width:74px;">役職</th>
+          <th class="pdf-th" style="width:150px;text-align:left;">会社・団体</th>
+          <th class="pdf-th" style="width:110px;text-align:left;">部署</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -765,6 +775,11 @@ function buildPdfTable(){
   wrap.querySelectorAll('.pdf-company-cell').forEach(td=>{
     td.style.color = '#5A7C8A';
     td.style.whiteSpace = 'normal';
+  });
+  wrap.querySelectorAll('.pdf-department-cell').forEach(td=>{
+    td.style.color = '#5A7C8A';
+    td.style.whiteSpace = 'normal';
+    td.style.fontSize = '12.5px';
   });
 
   return wrap;
@@ -845,7 +860,7 @@ function copyResults(){
     const timeLabel = groupStartTimes[gi] ? `[${groupStartTimes[gi]}スタート]` : '';
     const names = g.map(p=>{
       const posLabel = displayPosition(p) ? `${displayPosition(p)}・` : '';
-      return `${p.name}(${posLabel}${p.company||'-'})`;
+      return `${p.name}(${posLabel}${companyLabel(p)||'-'})`;
     }).join('、');
     return `${gi+1}組目${timeLabel} \n${names}`;
   });
