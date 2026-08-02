@@ -508,7 +508,7 @@ function generateGroups(){
 
   if(selected.length < 2){ alert('2名以上を選択してください'); return; }
 
-  const numGroups = Math.max(1, Math.round(selected.length / groupSize));
+  const numGroups = Math.max(1, Math.ceil(selected.length / groupSize));
   const base = Math.floor(selected.length / numGroups);
   const remainder = selected.length % numGroups;
   const capacities = Array.from({length:numGroups}, (_,i)=> base + (i < remainder ? 1 : 0));
